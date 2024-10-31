@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"fixedlength"
+	"github.com/esequiel378/fixedlength"
 )
 
 var input = `
