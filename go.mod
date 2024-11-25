@@ -1,3 +1,3 @@
-module github.com/esequiel378/fixedlength
+module github.com/sadensmol/fixedlength
 
 go 1.22.4
