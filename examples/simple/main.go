@@ -6,7 +6,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/esequiel378/fixedlength"
+	"github.com/sadensmol/fixedlength"
 )
 
 var input = `

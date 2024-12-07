@@ -39,7 +39,7 @@ If a struct field implements this interface, `fixedlength` will call its `Unmars
 You can install the library using Go modules:
 
 ```bash
-go get -u github.com/esequiel378/fixedlength
+go get -u github.com/sadensmol/fixedlength
 ```
 
 ## Getting Started
@@ -65,7 +65,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/esequiel378/fixedlength"
+	"github.com/sadensmol/fixedlength"
 )
 
 var input = `
@@ -115,7 +115,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/esequiel378/fixedlength"
+	"github.com/sadensmol/fixedlength"
 )
 
 var input = `

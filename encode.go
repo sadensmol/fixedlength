@@ -18,6 +18,11 @@ var (
 func setFieldValue(field reflect.Value, value string) error {
 	switch field.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		// fixme add default values into the tag
+		if value == "" {
+			value = "0"
+		}
+
 		intVal, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
 			return errors.Join(ErrInvalidIntValue, err)
@@ -25,6 +30,10 @@ func setFieldValue(field reflect.Value, value string) error {
 		field.SetInt(intVal)
 
 	case reflect.Float32, reflect.Float64:
+		// fixme add default values into the tag
+		if value == "" {
+			value = "0.0"
+		}
 		floatVal, err := strconv.ParseFloat(value, 64)
 		if err != nil {
 			return errors.Join(ErrInvalidFloatValue, err)

@@ -2,6 +2,7 @@ package fixedlength
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strings"
 )
@@ -77,20 +78,24 @@ func Unmarshal(data []byte, v any) error {
 			continue
 		}
 
-		tag := rv.Elem().Type().Field(i).Tag.Get("range")
-
-		start, end, err := parseTag(tag, len(data))
+		tag, err := parseFieldTag(rv.Elem().Type().Field(i).Tag, len(data))
 		if errors.Is(err, ErrTagEmpty) {
 			continue
 		}
 		if err != nil {
-			return err
+			if tag.flags.optional {
+				continue
+			}
+			return fmt.Errorf("failed to parse tag %s (%s) : %w", rv.Elem().Type().Field(i).Name, tag, err)
 		}
 
-		value := strings.TrimSpace(string(data[start:end]))
+		value := strings.TrimSpace(string(data[tag.fromPos:tag.toPos]))
 
 		if err := setFieldValue(field, value); err != nil {
-			return err
+			if tag.flags.optional {
+				continue
+			}
+			return fmt.Errorf("failed to set field value %s (%s) : %w", rv.Elem().Type().Field(i).Name, tag, err)
 		}
 	}
 

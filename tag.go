@@ -3,6 +3,7 @@ package fixedlength
 import (
 	"errors"
 	"fmt"
+	"reflect"
 	"strconv"
 	"strings"
 )
@@ -14,9 +15,66 @@ var (
 	ErrTagInvalidUpperBound  = errors.New("fixedlength: invalid upper bound")
 )
 
-// parseTag splits a struct field's json tag into its name and
+type tag struct {
+	fromPos int
+	toPos   int
+	flags   flags
+}
+
+type flags struct {
+	optional bool
+}
+
+func (t tag) String() string {
+	return fmt.Sprintf("range:%d,%d flags:%v", t.fromPos, t.toPos, t.flags)
+}
+
+func (f flags) String() string {
+	return fmt.Sprintf("optional:%t", f.optional)
+}
+
+func parseFieldTag(t reflect.StructTag, upperBound int) (tag, error) {
+	res := tag{}
+
+	flagsTag := t.Get("flags")
+	flags, err := parseFlagsTag(flagsTag)
+	if err != nil {
+		return res, err
+	}
+
+	res.flags = flags
+
+	rangeTag := t.Get("range")
+	start, end, err := parseRangeTag(rangeTag, upperBound)
+	if err != nil {
+		return res, err
+	}
+	res.fromPos = start
+	res.toPos = end
+
+	return res, nil
+}
+
+func parseFlagsTag(tag string) (flags, error) {
+	f := flags{}
+	if tag == "" {
+		return f, nil
+	}
+
+	parts := strings.Split(tag, ",")
+	for _, part := range parts {
+		switch part {
+		case "optional":
+			f.optional = true
+		}
+	}
+
+	return f, nil
+}
+
+// parseRangeTag splits a struct field's json tag into its name and
 // comma-separated options.
-func parseTag(tag string, upperBound int) (int, int, error) {
+func parseRangeTag(tag string, upperBound int) (int, int, error) {
 	if tag == "" {
 		return 0, 0, ErrTagEmpty
 	}
@@ -49,7 +107,7 @@ func parseTag(tag string, upperBound int) (int, int, error) {
 	}
 
 	if start > end {
-		return 0, 0, fmt.Errorf("%w: x > y from %s", ErrTagInefectualRange, tag)
+		return 0, 0, fmt.Errorf("%w: x > y (%d) from %s", ErrTagInefectualRange, upperBound, tag)
 	}
 
 	return start, end, nil

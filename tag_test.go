@@ -2,8 +2,20 @@ package fixedlength
 
 import (
 	"errors"
+	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
+
+func TestParseFieldTag(t *testing.T) {
+	st := reflect.StructTag(`range:"1,5" flags:"optional"`)
+	tag, err := parseFieldTag(st, 10)
+	require.NoError(t, err)
+	require.Equal(t, 1, tag.fromPos)
+	require.Equal(t, 5, tag.toPos)
+	require.True(t, tag.flags.optional)
+}
 
 func TestParseTag(t *testing.T) {
 	tests := []struct {
@@ -90,7 +102,7 @@ func TestParseTag(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotStart, gotEnd, err := parseTag(tt.tag, tt.upperBound)
+			gotStart, gotEnd, err := parseRangeTag(tt.tag, tt.upperBound)
 
 			// Check for expected errors
 			if err != nil && tt.wantErr == nil {
