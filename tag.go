@@ -9,16 +9,32 @@ import (
 )
 
 var (
-	ErrTagInefectualRange    = errors.New("fixedlength: inefectual range")
-	ErrTagEmpty              = errors.New("fixedlength: tag is empty")
-	ErrTagInvalidRangeValues = errors.New("fixedlength: invalid range values")
-	ErrTagInvalidUpperBound  = errors.New("fixedlength: invalid upper bound")
+	ErrTagInefectualRange    = errors.New("inefectual range")
+	ErrTagEmpty              = errors.New("tag is empty")
+	ErrTagInvalidRangeValues = errors.New("invalid range values")
+	ErrTagInvalidUpperBound  = errors.New("invalid upper bound")
 )
 
 type tag struct {
 	fromPos int
 	toPos   int
 	flags   flags
+}
+
+func (t tag) Len() int {
+	return t.toPos - t.fromPos
+}
+
+func (t tag) Validate(maxPos int) error {
+	if t.toPos > maxPos {
+		return fmt.Errorf("to pos is higher that length (%d): %s", maxPos, t)
+	}
+
+	if t.fromPos < 0 || t.toPos <= t.fromPos {
+		return fmt.Errorf("invalid range values: %s", t)
+	}
+
+	return nil
 }
 
 type flags struct {
@@ -33,7 +49,7 @@ func (f flags) String() string {
 	return fmt.Sprintf("optional:%t", f.optional)
 }
 
-func parseFieldTag(t reflect.StructTag, upperBound int) (tag, error) {
+func parseFieldTag(t reflect.StructTag) (tag, error) {
 	res := tag{}
 
 	flagsTag := t.Get("flags")
@@ -45,7 +61,7 @@ func parseFieldTag(t reflect.StructTag, upperBound int) (tag, error) {
 	res.flags = flags
 
 	rangeTag := t.Get("range")
-	start, end, err := parseRangeTag(rangeTag, upperBound)
+	start, end, err := parseRangeTag(rangeTag)
 	if err != nil {
 		return res, err
 	}
@@ -74,13 +90,9 @@ func parseFlagsTag(tag string) (flags, error) {
 
 // parseRangeTag splits a struct field's json tag into its name and
 // comma-separated options.
-func parseRangeTag(tag string, upperBound int) (int, int, error) {
+func parseRangeTag(tag string) (int, int, error) {
 	if tag == "" {
 		return 0, 0, ErrTagEmpty
-	}
-
-	if upperBound == 0 {
-		return 0, 0, fmt.Errorf("%w: %d", ErrTagInvalidUpperBound, upperBound)
 	}
 
 	parts := strings.Split(tag, ",")
@@ -94,21 +106,5 @@ func parseRangeTag(tag string, upperBound int) (int, int, error) {
 		return 0, 0, errors.Join(ErrTagInvalidRangeValues, err)
 	}
 
-	start := max(x, 0)
-	end := min(y, upperBound)
-
-	// -1 is used to indicate that the end of the string should be used
-	if end == -1 {
-		end = upperBound
-	}
-
-	if start == end {
-		return 0, 0, fmt.Errorf("%w: %s", ErrTagInefectualRange, tag)
-	}
-
-	if start > end {
-		return 0, 0, fmt.Errorf("%w: x > y (%d) from %s", ErrTagInefectualRange, upperBound, tag)
-	}
-
-	return start, end, nil
+	return x, y, nil
 }

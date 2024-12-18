@@ -4,8 +4,63 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"strconv"
 	"strings"
 )
+
+var (
+	ErrInvalidBooleanValue = errors.New("fixedlength: invalid boolean value")
+	ErrInvalidIntValue     = errors.New("fixedlength: invalid int value")
+	ErrInvalidFloatValue   = errors.New("fixedlength: invalid float value")
+	ErrUnsupportedKind     = errors.New("fixedlength: unsupported kind")
+)
+
+// setFieldValue sets the value for a struct field using reflection.
+func setFieldValue(field reflect.Value, value string) error {
+	switch field.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		// fixme add default values into the tag
+		if value == "" {
+			value = "0"
+		}
+
+		intVal, err := strconv.ParseInt(value, 10, 64)
+		if err != nil {
+			return errors.Join(ErrInvalidIntValue, err)
+		}
+		field.SetInt(intVal)
+
+	case reflect.Float32, reflect.Float64:
+		// fixme add default values into the tag
+		if value == "" {
+			value = "0.0"
+		}
+		floatVal, err := strconv.ParseFloat(value, 64)
+		if err != nil {
+			return errors.Join(ErrInvalidFloatValue, err)
+		}
+		field.SetFloat(floatVal)
+
+	case reflect.String:
+		field.SetString(value)
+
+	case reflect.Bool:
+		boolVal, err := strconv.ParseBool(value)
+		if err != nil {
+			return errors.Join(ErrInvalidBooleanValue, err)
+		}
+		field.SetBool(boolVal)
+
+	default:
+		if implementsUnmarshaler(field) {
+			um := field.Addr().Interface().(Unmarshaler)
+			return um.Unmarshal([]byte(value))
+		}
+
+		return fmt.Errorf("%w: %s", ErrUnsupportedKind, field.Kind())
+	}
+	return nil
+}
 
 // Unmarshaler is the interface implemented by types
 // that can unmarshal themselves.
@@ -65,6 +120,8 @@ func Unmarshal(data []byte, v any) error {
 		return InvalidUnmarshalError{reflect.TypeOf(v)}
 	}
 
+	// convert to runes since we use utf-8 here
+	runes := []rune(string(data))
 	// Iterate over struct fields to map segment names to fields
 	for i := 0; i < rv.Elem().NumField(); i++ {
 		field := rv.Elem().Field(i)
@@ -78,18 +135,28 @@ func Unmarshal(data []byte, v any) error {
 			continue
 		}
 
-		tag, err := parseFieldTag(rv.Elem().Type().Field(i).Tag, len(data))
-		if errors.Is(err, ErrTagEmpty) {
-			continue
-		}
+		tag, err := parseFieldTag(rv.Elem().Type().Field(i).Tag)
 		if err != nil {
+			if errors.Is(err, ErrTagEmpty) {
+				continue
+			}
+
 			if tag.flags.optional {
 				continue
 			}
 			return fmt.Errorf("failed to parse tag %s (%s) : %w", rv.Elem().Type().Field(i).Name, tag, err)
 		}
 
-		value := strings.TrimSpace(string(data[tag.fromPos:tag.toPos]))
+		l := len(runes)
+		err = tag.Validate(l)
+		if err != nil {
+			if tag.flags.optional {
+				continue
+			}
+			return fmt.Errorf("failed to validate tag %s (%s) : %w", rv.Elem().Type().Field(i).Name, tag, err)
+		}
+
+		value := strings.TrimSpace(string(runes[tag.fromPos:tag.toPos]))
 
 		if err := setFieldValue(field, value); err != nil {
 			if tag.flags.optional {

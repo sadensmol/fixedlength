@@ -10,7 +10,7 @@ import (
 
 func TestParseFieldTag(t *testing.T) {
 	st := reflect.StructTag(`range:"1,5" flags:"optional"`)
-	tag, err := parseFieldTag(st, 10)
+	tag, err := parseFieldTag(st)
 	require.NoError(t, err)
 	require.Equal(t, 1, tag.fromPos)
 	require.Equal(t, 5, tag.toPos)
@@ -102,7 +102,7 @@ func TestParseTag(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotStart, gotEnd, err := parseRangeTag(tt.tag, tt.upperBound)
+			gotStart, gotEnd, err := parseRangeTag(tt.tag)
 
 			// Check for expected errors
 			if err != nil && tt.wantErr == nil {
@@ -124,4 +124,30 @@ func TestParseTag(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTag_Validate(t *testing.T) {
+
+	t.Run("valid tag", func(t *testing.T) {
+		tag := tag{fromPos: 1, toPos: 5}
+		err := tag.Validate(10)
+		require.NoError(t, err)
+	})
+	t.Run("invalid tag: start position negative", func(t *testing.T) {
+		tag := tag{fromPos: -1, toPos: 5}
+		err := tag.Validate(10)
+		require.EqualError(t, err, "invalid range values: range:-1,5 flags:optional:false")
+	})
+
+	t.Run("invalid tag: end position less start position", func(t *testing.T) {
+		tag := tag{fromPos: 5, toPos: 3}
+		err := tag.Validate(10)
+		require.EqualError(t, err, "invalid range values: range:5,3 flags:optional:false")
+	})
+	t.Run("invalid tag: start and end position the same", func(t *testing.T) {
+		tag := tag{fromPos: 5, toPos: 5}
+		err := tag.Validate(10)
+		require.EqualError(t, err, "invalid range values: range:5,5 flags:optional:false")
+	})
+
 }
