@@ -97,7 +97,11 @@ func Marshal(d interface{}) ([]byte, error) {
 			return nil, fmt.Errorf("field %s is too long, required: %d but %d", structVal.Type().Field(tagWitPos.fieldNum).Name, tagLen, strLen)
 		}
 
-		sb.WriteString(formatStringWithPadding(str, tagLen+gap, stringPaddingTypeLeft))
+		str, err = FormatStringWithAlignment(str, tagLen+gap, GetConfig().AlignmentType)
+		if err != nil {
+			return nil, err
+		}
+		sb.WriteString(str)
 		lastPos = tagWitPos.tag.toPos
 	}
 	return []byte(sb.String()), nil
