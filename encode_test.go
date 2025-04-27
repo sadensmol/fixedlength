@@ -13,7 +13,7 @@ type intS struct {
 
 var _ Marshaler = &intS{}
 
-func (i *intS) Marshal() ([]byte, error) {
+func (i intS) Marshal() ([]byte, error) {
 	switch i.string {
 	case "yes":
 		return []byte("42"), nil
@@ -22,7 +22,6 @@ func (i *intS) Marshal() ([]byte, error) {
 }
 
 func TestMarshal(t *testing.T) {
-
 	t.Run("simple struct", func(t *testing.T) {
 		type s1 struct {
 			Field1 string  `range:"0,5" flags:"optional"`
@@ -33,7 +32,7 @@ func TestMarshal(t *testing.T) {
 		res, err := Marshal(&s1{Field1: "hello", Field2: 42, Field3: 3.14})
 		require.NoError(t, err)
 
-		require.Equal(t, "hello42   3.14      ", string(res))
+		require.Equal(t, "hello000420000003.14", string(res))
 	})
 	t.Run("struct with internal struct", func(t *testing.T) {
 

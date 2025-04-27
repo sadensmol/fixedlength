@@ -33,6 +33,11 @@ func implementsMarshaler(val reflect.Value) bool {
 	return false
 }
 
+// working with gaps:
+// field 1 [200,210)
+// field 2 [220, 230)
+// the gap between them : 10, starting from 210 (included ) and ended 219 (included)
+// 209|..........|220
 func Marshal(d interface{}) ([]byte, error) {
 	rv := reflect.ValueOf(d)
 	var structVal reflect.Value
@@ -74,34 +79,37 @@ func Marshal(d interface{}) ([]byte, error) {
 		return tagsWithPos[i].tag.fromPos < tagsWithPos[j].tag.fromPos
 	})
 
-	//todo: check for overlapping ranges
-
 	sb := strings.Builder{}
-
 	// use runes to handle utf-8
-	lastPos := 0
+	lastPos := 2 // we always start at 2 since the first two characters are the type and always filled outside
 	for _, tagWitPos := range tagsWithPos {
-		tagLen := tagWitPos.tag.toPos - tagWitPos.tag.fromPos
-		field := structVal.Field(tagWitPos.fieldNum)
-		gap := tagWitPos.tag.fromPos - lastPos
 
-		m, err := MarshalField(field, tagWitPos.tag)
+		field := structVal.Field(tagWitPos.fieldNum)
+		str, err := MarshalField(field, tagWitPos.tag)
 		if err != nil {
 			return nil, fmt.Errorf("failed to marshal field %s : %w", structVal.Type().Field(tagWitPos.fieldNum).Name, err)
 		}
 
-		str := string(m)
-		strLen := utf8.RuneCountInString(str)
+		strStr := string(str)
+		strLen := utf8.RuneCountInString(strStr)
 		// check if field is too long
+		tagLen := tagWitPos.tag.toPos - tagWitPos.tag.fromPos
 		if strLen > tagLen {
 			return nil, fmt.Errorf("field %s is too long, required: %d but %d", structVal.Type().Field(tagWitPos.fieldNum).Name, tagLen, strLen)
 		}
 
-		str, err = FormatStringWithAlignment(str, tagLen+gap, GetConfig().AlignmentType)
-		if err != nil {
-			return nil, err
+		gap := tagWitPos.tag.fromPos - lastPos
+		if gap < 0 {
+			return nil, fmt.Errorf("field %s is overlapping with previous field", structVal.Type().Field(tagWitPos.fieldNum).Name)
 		}
-		sb.WriteString(str)
+
+		if gap > 0 {
+			sb.WriteString(fmt.Sprintf("%*s", gap, ""))
+		}
+
+		// write the original string
+		sb.WriteString(strStr)
+
 		lastPos = tagWitPos.tag.toPos
 	}
 	return []byte(sb.String()), nil
@@ -109,21 +117,45 @@ func Marshal(d interface{}) ([]byte, error) {
 
 func MarshalField(field reflect.Value, t tag) ([]byte, error) {
 	var str string
+	var err error
+
+	align := GetConfig().AlignmentType
+	if t.align != AlignmentTypeNone {
+		align = t.align
+	}
+
 	switch field.Kind() {
-	case reflect.Int:
-		str = fmt.Sprintf("%d", field.Int())
-	case reflect.Float64:
-		str = fmt.Sprintf("%.*g", t.Len(), field.Float())
 	case reflect.String:
 		str = field.String()
+
+		str, err = FormatStringWithAlignment(str, t.Len(), align)
+		if err != nil {
+			return nil, err
+		}
+
+	case reflect.Int:
+		val := field.Int()
+		str, err = FormatIntWithAlignment(val, t.Len(), GetConfig().NumbersWithLeadingZeroes, align)
+		if err != nil {
+			return nil, err
+		}
+	case reflect.Float64:
+		val := field.Float()
+		str, err = FormatFloatWithAlignment(val, GetConfig().NumbersDecimalPlaces, t.Len(), GetConfig().NumbersWithLeadingZeroes, align)
+		if err != nil {
+			return nil, err
+		}
 	case reflect.Struct:
 		if implementsMarshaler(field) {
 			m := field.Interface().(Marshaler)
-			b, err := m.Marshal()
+			ba, err := m.Marshal()
 			if err != nil {
 				return nil, err
 			}
-			return b, nil
+			str, err = FormatStringWithAlignment(string(ba), t.Len(), align)
+			if err != nil {
+				return nil, err
+			}
 		}
 	}
 

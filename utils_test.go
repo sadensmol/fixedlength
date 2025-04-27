@@ -102,7 +102,7 @@ func TestFormatFloatWithPadding(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := FormatFloatWithAlignment(tt.num, tt.numDecimals, tt.leadingZeroes, tt.length, tt.paddingType)
+			res, err := FormatFloatWithAlignment(tt.num, tt.numDecimals, tt.length, tt.leadingZeroes, tt.paddingType)
 			if err != nil || tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			}
@@ -115,7 +115,7 @@ func TestFormatFloatWithPadding(t *testing.T) {
 func TestFormatIntWithPadding(t *testing.T) {
 	tests := []struct {
 		name          string
-		num           int
+		num           int64
 		leadingZeroes bool
 		paddingType   AlignmentType
 		length        int

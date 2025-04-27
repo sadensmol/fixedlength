@@ -19,6 +19,7 @@ type tag struct {
 	fromPos int
 	toPos   int
 	flags   flags
+	align   AlignmentType
 }
 
 func (t tag) Len() int {
@@ -57,8 +58,14 @@ func parseFieldTag(t reflect.StructTag) (tag, error) {
 	if err != nil {
 		return res, err
 	}
-
 	res.flags = flags
+
+	alignTag := t.Get("align")
+	align, err := parseAlignTag(alignTag)
+	if err != nil {
+		return res, err
+	}
+	res.align = align
 
 	rangeTag := t.Get("range")
 	start, end, err := parseRangeTag(rangeTag)
@@ -86,6 +93,21 @@ func parseFlagsTag(tag string) (flags, error) {
 	}
 
 	return f, nil
+}
+
+func parseAlignTag(tag string) (AlignmentType, error) {
+	if tag == "" {
+		return AlignmentTypeNone, nil
+	}
+
+	switch tag {
+	case "left":
+		return AlignmentTypeLeft, nil
+	case "right":
+		return AlignmentTypeRight, nil
+	}
+
+	return AlignmentTypeNone, fmt.Errorf("invalid align type: %s", tag)
 }
 
 // parseRangeTag splits a struct field's json tag into its name and

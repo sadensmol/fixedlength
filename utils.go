@@ -7,6 +7,7 @@ import (
 type AlignmentType int
 
 var (
+	AlignmentTypeNone   AlignmentType = 0
 	AlignmentTypeRight  AlignmentType = 1
 	AlignmentTypeLeft   AlignmentType = 2
 	AlignmentTypeCenter AlignmentType = 3
@@ -17,7 +18,7 @@ func FormatStringWithAlignment(str string, length int, alignmentType AlignmentTy
 }
 
 // FormatFloatWithAlignment formats float64 with specified decimal places
-func FormatFloatWithAlignment(num float64, decimals int, leadingZeroes bool, length int, alignmentType AlignmentType) (string, error) {
+func FormatFloatWithAlignment(num float64, decimals int, length int, leadingZeroes bool, alignmentType AlignmentType) (string, error) {
 	str := fmt.Sprintf("%.*f", decimals, num)
 	filler := byte(' ')
 	if leadingZeroes {
@@ -28,7 +29,7 @@ func FormatFloatWithAlignment(num float64, decimals int, leadingZeroes bool, len
 }
 
 // FormatIntWithAlignment formats integer
-func FormatIntWithAlignment(num int, length int, leadingZeroes bool, alignmentType AlignmentType) (string, error) {
+func FormatIntWithAlignment(num int64, length int, leadingZeroes bool, alignmentType AlignmentType) (string, error) {
 	str := fmt.Sprintf("%d", num)
 	filler := byte(' ')
 	if leadingZeroes {
@@ -40,48 +41,50 @@ func FormatIntWithAlignment(num int, length int, leadingZeroes bool, alignmentTy
 
 // formatWithFiller handles string formatting with specified filler character
 func formatWithFiller(str string, length int, alignmentType AlignmentType, filler byte) (string, error) {
-	if len(str) > length {
-		return "", fmt.Errorf("string length exceeds target length")
+	runes := []rune(str)
+	runeCount := len(runes)
+	if runeCount > length {
+		return "", fmt.Errorf("string %s length %d exceeds target length", str, runeCount, length)
 	}
 
-	buf := make([]byte, length)
-	strLen := len(str)
-	diff := length - strLen
+	result := make([]rune, length)
+	fillerRune := rune(filler)
+	diff := length - runeCount
 
 	switch alignmentType {
 	case AlignmentTypeLeft:
 		// Copy string first
-		copy(buf[0:], str)
+		copy(result, runes)
 		// Fill remaining with filler
-		for i := strLen; i < length; i++ {
-			buf[i] = filler
+		for i := runeCount; i < length; i++ {
+			result[i] = fillerRune
 		}
 
 	case AlignmentTypeRight:
 		// Fill padding first
 		for i := 0; i < diff; i++ {
-			buf[i] = filler
+			result[i] = fillerRune
 		}
 		// Copy string after padding
-		copy(buf[diff:], str)
+		copy(result[diff:], runes)
 
 	case AlignmentTypeCenter:
 		leftPad := diff / 2
 
 		// Fill left padding
 		for i := 0; i < leftPad; i++ {
-			buf[i] = filler
+			result[i] = fillerRune
 		}
 		// Copy string in middle
-		copy(buf[leftPad:], str)
+		copy(result[leftPad:], runes)
 		// Fill right padding
-		for i := leftPad + strLen; i < length; i++ {
-			buf[i] = filler
+		for i := leftPad + runeCount; i < length; i++ {
+			result[i] = fillerRune
 		}
 
 	default:
 		return "", fmt.Errorf("unsupported alignment type")
 	}
 
-	return string(buf), nil
+	return string(result), nil
 }
