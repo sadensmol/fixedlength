@@ -24,7 +24,12 @@ func setFieldValue(field reflect.Value, value string) error {
 			value = "0"
 		}
 
-		intVal, err := strconv.ParseInt(value, 10, 64)
+		cValue, err := EbcdicToAsciiNumber(value)
+		if err != nil {
+			return err
+		}
+
+		intVal, err := strconv.ParseInt(cValue, 10, 64)
 		if err != nil {
 			return errors.Join(ErrInvalidIntValue, err)
 		}
@@ -35,7 +40,13 @@ func setFieldValue(field reflect.Value, value string) error {
 		if value == "" {
 			value = "0.0"
 		}
-		floatVal, err := strconv.ParseFloat(value, 64)
+
+		cValue, err := EbcdicToAsciiNumber(value)
+		if err != nil {
+			return err
+		}
+
+		floatVal, err := strconv.ParseFloat(cValue, 64)
 		if err != nil {
 			return errors.Join(ErrInvalidFloatValue, err)
 		}

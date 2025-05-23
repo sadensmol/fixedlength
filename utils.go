@@ -44,7 +44,7 @@ func formatWithFiller(str string, length int, alignmentType AlignmentType, fille
 	runes := []rune(str)
 	runeCount := len(runes)
 	if runeCount > length {
-		return "", fmt.Errorf("string %s length %d exceeds target length", str, runeCount, length)
+		return "", fmt.Errorf("string %s length %d exceeds target length %d", str, runeCount, length)
 	}
 
 	result := make([]rune, length)
