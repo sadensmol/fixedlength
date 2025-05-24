@@ -262,7 +262,9 @@ func TestSetFieldValue(t *testing.T) {
 			}
 
 			// Call setFieldValue and check for errors
-			err := setFieldValue(field, tt.value)
+			// Create an empty tag for testing purposes
+			emptyTag := tag{}
+			err := setFieldValue(field, tt.value, emptyTag)
 
 			// Check for expected error
 			if err != nil && tt.wantErr == nil {
@@ -295,6 +297,59 @@ func TestSetFieldValue(t *testing.T) {
 						t.Errorf("expected bool value %v, got %v", tt.wantValue, field.Bool())
 					}
 				}
+			}
+		})
+	}
+}
+
+func TestUnmarshalWithDecimals(t *testing.T) {
+	type testStruct struct {
+		Amount float64 `range:"0,6" decimals:"2"`
+	}
+
+	tests := []struct {
+		name        string
+		data        []byte
+		expected    float64
+		expectedErr error
+	}{
+		{
+			name:        "positive float with decimals",
+			data:        []byte("012345"),
+			expected:    123.45,
+			expectedErr: nil,
+		},
+		{
+			name:        "zero padded with decimals",
+			data:        []byte("000199"),
+			expected:    1.99,
+			expectedErr: nil,
+		},
+		{
+			name:        "negative number with decimals",
+			data:        []byte("01234K"), // K represents negative 2 in EBCDIC
+			expected:    -123.42,
+			expectedErr: nil,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var v testStruct
+			err := Unmarshal(tt.data, &v)
+
+			if (err != nil) != (tt.expectedErr != nil) {
+				t.Errorf("Unmarshal() error = %v, expected error %v", err, tt.expectedErr)
+				return
+			}
+
+			if err != nil && tt.expectedErr != nil && err.Error() != tt.expectedErr.Error() {
+				t.Errorf("Unmarshal() error = %v, expected error %v", err, tt.expectedErr)
+				return
+			}
+
+			if v.Amount != tt.expected {
+				t.Errorf("Expected Amount to be %v, got %v", tt.expected, v.Amount)
 			}
 		})
 	}
