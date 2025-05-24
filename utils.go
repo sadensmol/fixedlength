@@ -17,20 +17,8 @@ func FormatStringWithAlignment(str string, length int, alignmentType AlignmentTy
 	return formatWithFiller(str, length, alignmentType, ' ')
 }
 
-// FormatFloatWithAlignment formats float64 with specified decimal places
-func FormatFloatWithAlignment(num float64, decimals int, length int, leadingZeroes bool, alignmentType AlignmentType) (string, error) {
-	str := fmt.Sprintf("%.*f", decimals, num)
-	filler := byte(' ')
-	if leadingZeroes {
-		filler = '0'
-		alignmentType = AlignmentTypeRight // we always add zeroes in the beginning
-	}
-	return formatWithFiller(str, length, alignmentType, filler)
-}
-
-// FormatIntWithAlignment formats integer
-func FormatIntWithAlignment(num int64, length int, leadingZeroes bool, alignmentType AlignmentType) (string, error) {
-	str := fmt.Sprintf("%d", num)
+func FormatStrNumberWithAlignment(strNum string, length int, leadingZeroes bool, alignmentType AlignmentType) (string, error) {
+	str := fmt.Sprintf("%s", strNum)
 	filler := byte(' ')
 	if leadingZeroes {
 		filler = '0'

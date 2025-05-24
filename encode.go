@@ -135,13 +135,20 @@ func MarshalField(field reflect.Value, t tag) ([]byte, error) {
 
 	case reflect.Int:
 		val := field.Int()
-		str, err = FormatIntWithAlignment(val, t.Len(), GetConfig().NumbersWithLeadingZeroes, align)
+
+		cVal, err := ConvertAsciiToEBCDICNumber(fmt.Sprintf("%d", val), tag.decimals)
+		if err != nil {
+			return nil, fmt.Errorf("failed to convert int to EBCDIC: %w", err)
+		}
+
+		str, err = FormatStrNumberWithAlignment(cVal, t.Len(), GetConfig().NumbersWithLeadingZeroes, align)
 		if err != nil {
 			return nil, err
 		}
 	case reflect.Float64:
 		val := field.Float()
-		str, err = FormatFloatWithAlignment(val, GetConfig().NumbersDecimalPlaces, t.Len(), GetConfig().NumbersWithLeadingZeroes, align)
+		cVal, err := ConvertAsciiToEBCDICNumber(fmt.Sprintf("%f", val), tag.decimals)
+		str, err = FormatStrNumberWithAlignment(cVal, t.Len(), GetConfig().NumbersWithLeadingZeroes, align)
 		if err != nil {
 			return nil, err
 		}

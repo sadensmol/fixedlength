@@ -52,7 +52,7 @@ func TestFormatStringWithPadding(t *testing.T) {
 func TestFormatFloatWithPadding(t *testing.T) {
 	tests := []struct {
 		name          string
-		num           float64
+		num           string
 		numDecimals   int
 		leadingZeroes bool
 		paddingType   AlignmentType
@@ -63,8 +63,7 @@ func TestFormatFloatWithPadding(t *testing.T) {
 	}{
 		{
 			name:          "left alignment float 2 decimals no leading zeroes",
-			num:           12345.12,
-			numDecimals:   2,
+			num:           "12345.12",
 			leadingZeroes: false,
 			paddingType:   AlignmentTypeLeft,
 			length:        15,
@@ -72,8 +71,7 @@ func TestFormatFloatWithPadding(t *testing.T) {
 		},
 		{
 			name:          "right alignment float 2 decimals no leading zeroes",
-			num:           12345.12,
-			numDecimals:   2,
+			num:           "12345.12",
 			leadingZeroes: false,
 			paddingType:   AlignmentTypeRight,
 			length:        15,
@@ -82,8 +80,7 @@ func TestFormatFloatWithPadding(t *testing.T) {
 
 		{
 			name:          "left alignment float 2 decimals leading zeroes",
-			num:           12345.12,
-			numDecimals:   2,
+			num:           "12345.12",
 			leadingZeroes: true,
 			paddingType:   AlignmentTypeLeft,
 			length:        15,
@@ -91,8 +88,7 @@ func TestFormatFloatWithPadding(t *testing.T) {
 		},
 		{
 			name:          "right alignment float no decimals leading zeroes",
-			num:           12345.12,
-			numDecimals:   0,
+			num:           "12345.12",
 			leadingZeroes: true,
 			paddingType:   AlignmentTypeRight,
 			length:        15,
@@ -102,7 +98,7 @@ func TestFormatFloatWithPadding(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := FormatFloatWithAlignment(tt.num, tt.numDecimals, tt.length, tt.leadingZeroes, tt.paddingType)
+			res, err := FormatStrNumberWithAlignment(tt.num, tt.length, tt.leadingZeroes, tt.paddingType)
 			if err != nil || tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			}
@@ -115,7 +111,7 @@ func TestFormatFloatWithPadding(t *testing.T) {
 func TestFormatIntWithPadding(t *testing.T) {
 	tests := []struct {
 		name          string
-		num           int64
+		num           string
 		leadingZeroes bool
 		paddingType   AlignmentType
 		length        int
@@ -125,7 +121,7 @@ func TestFormatIntWithPadding(t *testing.T) {
 	}{
 		{
 			name:          "left alignment int with no leading zeroes",
-			num:           12345,
+			num:           "12345",
 			leadingZeroes: false,
 			paddingType:   AlignmentTypeLeft,
 			length:        15,
@@ -133,7 +129,7 @@ func TestFormatIntWithPadding(t *testing.T) {
 		},
 		{
 			name:          "right alignment int with no leading zeroes",
-			num:           12345,
+			num:           "12345",
 			leadingZeroes: false,
 			paddingType:   AlignmentTypeRight,
 			length:        15,
@@ -141,7 +137,7 @@ func TestFormatIntWithPadding(t *testing.T) {
 		},
 		{
 			name:          "left alignment int with leading zeroes",
-			num:           12345,
+			num:           "12345",
 			leadingZeroes: true,
 			paddingType:   AlignmentTypeLeft,
 			length:        15,
@@ -149,7 +145,7 @@ func TestFormatIntWithPadding(t *testing.T) {
 		},
 		{
 			name:          "right alignment int with no leading zeroes",
-			num:           12345,
+			num:           "12345",
 			leadingZeroes: true,
 			paddingType:   AlignmentTypeRight,
 			length:        15,
@@ -159,7 +155,7 @@ func TestFormatIntWithPadding(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := FormatIntWithAlignment(tt.num, tt.length, tt.leadingZeroes, tt.paddingType)
+			res, err := FormatStrNumberWithAlignment(tt.num, tt.length, tt.leadingZeroes, tt.paddingType)
 			if err != nil || tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			}
