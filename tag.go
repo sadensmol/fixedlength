@@ -105,7 +105,7 @@ func parseFlagsTag(tag string) (flags, error) {
 
 func parseDecimalsTag(tag string) (int, error) {
 	if tag == "" {
-		return 0, fmt.Errorf("decimals tag is empty")
+		return -1, nil // -1 means no decimals
 	}
 
 	decimals, err := strconv.ParseInt(tag, 10, 0)
