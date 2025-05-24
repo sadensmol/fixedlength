@@ -17,6 +17,13 @@ func TestParseFieldTag(t *testing.T) {
 	require.True(t, tag.flags.optional)
 }
 
+func TestParseDecimalsTag(t *testing.T) {
+	st := reflect.StructTag(`range:"10,12" decimals:"15"`)
+	tag, err := parseFieldTag(st)
+	require.NoError(t, err)
+	require.Equal(t, 15, tag.decimals)
+}
+
 func TestParseTag(t *testing.T) {
 	tests := []struct {
 		name       string

@@ -16,10 +16,11 @@ var (
 )
 
 type tag struct {
-	fromPos int
-	toPos   int
-	flags   flags
-	align   AlignmentType
+	fromPos  int
+	toPos    int
+	flags    flags
+	align    AlignmentType
+	decimals int
 }
 
 func (t tag) Len() int {
@@ -67,6 +68,13 @@ func parseFieldTag(t reflect.StructTag) (tag, error) {
 	}
 	res.align = align
 
+	decimalsTag := t.Get("decimals")
+	decimals, err := parseDecimalsTag(decimalsTag)
+	if err != nil {
+		return res, err
+	}
+	res.decimals = decimals
+
 	rangeTag := t.Get("range")
 	start, end, err := parseRangeTag(rangeTag)
 	if err != nil {
@@ -93,6 +101,19 @@ func parseFlagsTag(tag string) (flags, error) {
 	}
 
 	return f, nil
+}
+
+func parseDecimalsTag(tag string) (int, error) {
+	if tag == "" {
+		return 0, fmt.Errorf("decimals tag is empty")
+	}
+
+	decimals, err := strconv.ParseInt(tag, 10, 0)
+	if err != nil {
+		return 0, fmt.Errorf("invalid decimals tag: %s", tag)
+	}
+
+	return int(decimals), nil
 }
 
 func parseAlignTag(tag string) (AlignmentType, error) {

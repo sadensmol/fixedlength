@@ -1,7 +1,6 @@
 package fixedlength
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 )
@@ -19,63 +18,53 @@ var ebcdicToASCIINegativeMap = map[rune]int{
 	'ü': 0,
 }
 
-func EbcdicToAsciiNumber(ebcdicField string) (string, error) {
-	if len(ebcdicField) == 0 {
-		return "", fmt.Errorf("empty EBCDIC field")
+// ConvertEBCDICToAsciiNumber converts an EBCDIC number to an ASCII number.
+// input EBCDIC value doesn't contain any decimal point.
+// It handles negative numbers represented by specific characters.
+// The function also allows specifying the number of decimal places, this should apply after the negative conversion if decimal
+// places number > 0.
+// It returns the converted string and an error if any issues occur during conversion.
+func ConvertEBCDICToAsciiNumber(value string, decimalPlaces int) (string, error) {
+	if len(value) == 0 {
+		value = "0"
 	}
 
-	// Check only the last character for EBCDIC negative sign
-	lastChar := rune(ebcdicField[len(ebcdicField)-1])
-	if digit, ok := ebcdicToASCIINegativeMap[lastChar]; ok {
-		// It's a negative number in EBCDIC format
-		numPart := ebcdicField[:len(ebcdicField)-1]
+	// Check for negative number representation
+	runes := []rune(value)
+	lastRune := runes[len(runes)-1]
+	negative := false
 
-		// If just a single EBCDIC character
-		if numPart == "" {
-			return "-" + strconv.Itoa(digit), nil
+	// Handle negative number if last character is in the map
+	if digit, ok := ebcdicToASCIINegativeMap[lastRune]; ok {
+		negative = true
+		// Replace the last character with its numeric representation
+		if len(runes) == 1 {
+			value = strconv.Itoa(digit)
+		} else {
+			value = string(runes[:len(runes)-1]) + strconv.Itoa(digit)
 		}
-
-		// Handle float values (containing a decimal point)
-		if strings.Contains(numPart, ".") {
-			// Remove leading zeros before decimal point
-			parts := strings.Split(numPart, ".")
-			intPart := parts[0]
-
-			start := 0
-			for start < len(intPart) && intPart[start] == '0' {
-				start++
-			}
-
-			// All zeros in integer part
-			if start == len(intPart) {
-				intPart = "0"
-			} else {
-				intPart = intPart[start:]
-			}
-
-			// Reconstruct with decimal part and EBCDIC digit
-			if len(parts) > 1 {
-				return "-" + intPart + "." + parts[1] + strconv.Itoa(digit), nil
-			}
-			return "-" + intPart + strconv.Itoa(digit), nil
-		}
-
-		// Handle integer values
-		// Remove leading zeros
-		start := 0
-		for start < len(numPart) && numPart[start] == '0' {
-			start++
-		}
-
-		// All zeros case
-		if start == len(numPart) {
-			return "-" + strconv.Itoa(digit), nil
-		}
-
-		result := numPart[start:] + strconv.Itoa(digit)
-		return "-" + result, nil
 	}
 
-	// If last character is not an EBCDIC sign, return the original
-	return ebcdicField, nil
+	value = strings.TrimLeft(value, "0")
+	if value == "" {
+		value = "0"
+	}
+	minLength := decimalPlaces + 1
+	if minLength < 1 {
+		minLength = 1
+	}
+	for len(value) < minLength {
+		value = "0" + value
+	}
+
+	if decimalPlaces > 0 {
+		insertAt := len(value) - decimalPlaces
+		value = value[:insertAt] + "." + value[insertAt:]
+	}
+
+	if negative {
+		value = "-" + value
+	}
+
+	return value, nil
 }

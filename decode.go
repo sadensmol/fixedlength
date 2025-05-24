@@ -16,15 +16,12 @@ var (
 )
 
 // setFieldValue sets the value for a struct field using reflection.
-func setFieldValue(field reflect.Value, value string) error {
+func setFieldValue(field reflect.Value, value string, tag tag) error {
+
 	switch field.Kind() {
 	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-		// fixme add default values into the tag
-		if value == "" {
-			value = "0"
-		}
 
-		cValue, err := EbcdicToAsciiNumber(value)
+		cValue, err := ConvertEBCDICToAsciiNumber(value, tag.decimals)
 		if err != nil {
 			return err
 		}
@@ -36,12 +33,7 @@ func setFieldValue(field reflect.Value, value string) error {
 		field.SetInt(intVal)
 
 	case reflect.Float32, reflect.Float64:
-		// fixme add default values into the tag
-		if value == "" {
-			value = "0.0"
-		}
-
-		cValue, err := EbcdicToAsciiNumber(value)
+		cValue, err := ConvertEBCDICToAsciiNumber(value, tag.decimals)
 		if err != nil {
 			return err
 		}
@@ -169,7 +161,7 @@ func Unmarshal(data []byte, v any) error {
 
 		value := strings.TrimSpace(string(runes[tag.fromPos:tag.toPos]))
 
-		if err := setFieldValue(field, value); err != nil {
+		if err := setFieldValue(field, value, tag); err != nil {
 			if tag.flags.optional {
 				continue
 			}

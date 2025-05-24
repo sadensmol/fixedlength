@@ -6,106 +6,89 @@ import (
 
 func TestEbcdicToAsciiNumber(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    string
-		expected string
-		wantErr  bool
+		name          string
+		input         string
+		decimalPlaces int
+		expected      string
 	}{
 		{
 			name:     "Empty string",
 			input:    "",
-			expected: "",
-			wantErr:  true,
+			expected: "0",
+		},
+		{
+			name:          "Empty string",
+			input:         "",
+			decimalPlaces: 2,
+			expected:      "0.00",
 		},
 		{
 			name:     "Normal number",
 			input:    "12345",
 			expected: "12345",
-			wantErr:  false,
+		},
+		{
+			name:          "Normal number with 2 decimal places",
+			input:         "12345",
+			decimalPlaces: 2,
+			expected:      "123.45",
 		},
 		{
 			name:     "Negative number with J",
 			input:    "0000J",
 			expected: "-1",
-			wantErr:  false,
+		},
+		{
+			name:          "Negative number with J and 2 decimal places",
+			input:         "0000J",
+			decimalPlaces: 2,
+			expected:      "-0.01",
 		},
 		{
 			name:     "Negative number with K",
 			input:    "0001K",
 			expected: "-12",
-			wantErr:  false,
+		},
+		{
+			name:          "Negative number with K and 2 decimal places",
+			input:         "0001K",
+			decimalPlaces: 2,
+			expected:      "-0.12",
 		},
 		{
 			name:     "Negative number with ü",
 			input:    "0020ü",
 			expected: "-200",
-			wantErr:  false,
+		},
+		{
+			name:          "Negative number with ü and 2 decimal places",
+			input:         "0020ü",
+			decimalPlaces: 2,
+			expected:      "-2.00",
 		},
 		{
 			name:     "Leading zeros with negative",
 			input:    "00001J",
 			expected: "-11",
-			wantErr:  false,
 		},
 		{
-			name:     "Only EBCDIC character (still treated as negative)",
+			name:     "Only EBCDIC character",
 			input:    "J",
 			expected: "-1",
-			wantErr:  false,
 		},
 		{
 			name:     "Zero with negative",
 			input:    "0000ü",
 			expected: "-0",
-			wantErr:  false,
-		},
-		{
-			name:     "Float value",
-			input:    "123.45",
-			expected: "123.45",
-			wantErr:  false,
-		},
-		{
-			name:     "Negative float with J",
-			input:    "123.4J",
-			expected: "-123.41",
-			wantErr:  false,
-		},
-		{
-			name:     "Negative float with K",
-			input:    "0.01K",
-			expected: "-0.012",
-			wantErr:  false,
-		},
-		{
-			name:     "Float with leading zeros and negative",
-			input:    "00123.40ü",
-			expected: "-123.400",
-			wantErr:  false,
-		},
-		{
-			name:     "Float with trailing zeros and negative",
-			input:    "123.00J",
-			expected: "-123.001",
-			wantErr:  false,
-		},
-		{
-			name:     "Zero float with negative",
-			input:    "0.00J",
-			expected: "-0.001",
-			wantErr:  false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := EbcdicToAsciiNumber(tt.input)
+			var result string
+			var err error
 
-			// Check error
-			if (err != nil) != tt.wantErr {
-				t.Errorf("EbcdicToAsciiNumber() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			result, err = ConvertEBCDICToAsciiNumber(tt.input, tt.decimalPlaces)
 
 			// Check result if no error
 			if err == nil && result != tt.expected {
