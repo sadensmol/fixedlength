@@ -141,7 +141,8 @@ func MarshalField(field reflect.Value, t tag) ([]byte, error) {
 			return nil, fmt.Errorf("failed to convert int to EBCDIC: %w", err)
 		}
 
-		str, err = FormatStrNumberWithAlignment(cVal, t.Len(), GetConfig().NumbersWithLeadingZeroes, align)
+		leadingZeroes := GetConfig().NumbersWithLeadingZeroes
+		str, err = FormatStrNumberWithAlignment(cVal, t.Len(), leadingZeroes, align)
 		if err != nil {
 			return nil, err
 		}
@@ -151,7 +152,8 @@ func MarshalField(field reflect.Value, t tag) ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to convert float to EBCDIC: %w", err)
 		}
-		str, err = FormatStrNumberWithAlignment(cVal, t.Len(), GetConfig().NumbersWithLeadingZeroes, align)
+		leadingZeroes := GetConfig().NumbersWithLeadingZeroes
+		str, err = FormatStrNumberWithAlignment(cVal, t.Len(), leadingZeroes, align)
 		if err != nil {
 			return nil, err
 		}

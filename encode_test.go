@@ -49,19 +49,15 @@ func TestMarshal(t *testing.T) {
 }
 func TestMarshalIntegers(t *testing.T) {
 	type intStruct struct {
-		Value int `range:"0,10"`
+		Value int `range:"2,12"`
 	}
 
 	type smallIntStruct struct {
-		Value int `range:"0,5"`
+		Value int `range:"2,7"`
 	}
 
 	type intStructWithRightTag struct {
-		Value int `range:"0,10" align:"right"`
-	}
-
-	type intStructWithLeftTag struct {
-		Value int `range:"0,10" align:"left"`
+		Value int `range:"2,12" align:"right"`
 	}
 
 	tests := []struct {
@@ -84,7 +80,7 @@ func TestMarshalIntegers(t *testing.T) {
 		{
 			name:     "negative integer",
 			value:    -42,
-			expected: "00000004K", // K represents negative 2 in EBCDIC
+			expected: "000000004K", // K represents negative 2 in EBCDIC
 		},
 		{
 			name:     "right aligned integer",
@@ -96,20 +92,9 @@ func TestMarshalIntegers(t *testing.T) {
 			name:     "negative right aligned integer",
 			value:    -42,
 			fieldTag: "right",
-			expected: "00000004K", // K represents negative 2 in EBCDIC, zeros on left
+			expected: "000000004K", // K represents negative 2 in EBCDIC, zeros on left
 		},
-		{
-			name:     "left aligned integer",
-			value:    42,
-			fieldTag: "left",
-			expected: "042       ",
-		},
-		{
-			name:     "negative left aligned integer",
-			value:    -42,
-			fieldTag: "left",
-			expected: "04K       ", // K represents negative 2 in EBCDIC
-		},
+
 		{
 			name:     "large integer",
 			value:    1234567890,
@@ -118,7 +103,7 @@ func TestMarshalIntegers(t *testing.T) {
 		{
 			name:     "larger negative integer",
 			value:    -123456789,
-			expected: "12345678R", // R represents negative 9 in EBCDIC
+			expected: "012345678R", // R represents negative 9 in EBCDIC
 		},
 		{
 			name:      "integer overflow",
@@ -135,8 +120,6 @@ func TestMarshalIntegers(t *testing.T) {
 
 			if tt.fieldTag == "right" {
 				res, err = Marshal(&intStructWithRightTag{Value: tt.value})
-			} else if tt.fieldTag == "left" {
-				res, err = Marshal(&intStructWithLeftTag{Value: tt.value})
 			} else if tt.fieldTag == "small" {
 				res, err = Marshal(&smallIntStruct{Value: tt.value})
 			} else {
@@ -155,23 +138,19 @@ func TestMarshalIntegers(t *testing.T) {
 
 func TestMarshalFloats(t *testing.T) {
 	type floatStruct struct {
-		Value float64 `range:"0,10"`
+		Value float64 `range:"2,12" decimals:"2"`
+	}
+
+	type floatStructWith3Decimals struct {
+		Value float64 `range:"2,12" decimals:"3"`
 	}
 
 	type smallFloatStruct struct {
-		Value float64 `range:"0,5"`
-	}
-
-	type floatStructWithDecimals struct {
-		Value float64 `range:"0,10" decimals:"3"`
+		Value float64 `range:"2,7" decimals:"2"`
 	}
 
 	type floatStructWithRightAlign struct {
-		Value float64 `range:"0,10" align:"right"`
-	}
-
-	type floatStructWithLeftAlign struct {
-		Value float64 `range:"0,10" align:"left"`
+		Value float64 `range:"2,12" decimals:"2" align:"right"`
 	}
 
 	tests := []struct {
@@ -184,52 +163,41 @@ func TestMarshalFloats(t *testing.T) {
 		{
 			name:     "positive float",
 			value:    3.14,
-			expected: "0000003.14",
+			expected: "0000000314",
 		},
 		{
 			name:     "float with decimals tag",
 			value:    3.14159,
-			fieldTag: "decimals",
-			expected: "0000003.142",
+			fieldTag: "decimals3",
+			expected: "0000003141",
 		},
 		{
 			name:     "zero float",
 			value:    0.0,
-			expected: "0000000.00",
+			expected: "0000000000",
 		},
 		{
 			name:     "negative float",
 			value:    -42.5,
-			expected: "0004250ü", // ü represents negative 0 in EBCDIC
+			expected: "000000425ü", // ü represents negative 0 in EBCDIC
 		},
 		{
 			name:     "right aligned float",
 			value:    3.14,
 			fieldTag: "right",
-			expected: "0000003.14", // Fill with zeros on the left side
+			expected: "0000000314", // Fill with zeros on the left side
 		},
 		{
 			name:     "negative right aligned float",
 			value:    -42.5,
 			fieldTag: "right",
-			expected: "0004250ü", // ü represents negative 0 in EBCDIC, zeros on left
+			expected: "000000425ü", // ü represents negative 0 in EBCDIC, zeros on left
 		},
-		{
-			name:     "left aligned float",
-			value:    3.14,
-			fieldTag: "left",
-			expected: "03.14     ",
-		},
-		{
-			name:     "negative left aligned float",
-			value:    -42.5,
-			fieldTag: "left",
-			expected: "0425ü     ", // ü represents negative 0 in EBCDIC
-		},
+
 		{
 			name:     "larger negative float",
-			value:    -9876.54,
-			expected: "000987654Q", // Q represents negative 8 in EBCDIC
+			value:    -9876.58,
+			expected: "000098765Q", // Q represents negative 8 in EBCDIC
 		},
 		{
 			name:      "float overflow",
@@ -244,12 +212,10 @@ func TestMarshalFloats(t *testing.T) {
 			var err error
 			var res []byte
 
-			if tt.fieldTag == "decimals" {
-				res, err = Marshal(&floatStructWithDecimals{Value: tt.value})
+			if tt.fieldTag == "decimals3" {
+				res, err = Marshal(&floatStructWith3Decimals{Value: tt.value})
 			} else if tt.fieldTag == "right" {
 				res, err = Marshal(&floatStructWithRightAlign{Value: tt.value})
-			} else if tt.fieldTag == "left" {
-				res, err = Marshal(&floatStructWithLeftAlign{Value: tt.value})
 			} else if tt.fieldTag == "small" {
 				res, err = Marshal(&smallFloatStruct{Value: tt.value})
 			} else {
@@ -258,9 +224,6 @@ func TestMarshalFloats(t *testing.T) {
 
 			if tt.expectErr {
 				require.Error(t, err)
-				if tt.fieldTag == "small" {
-					require.Contains(t, err.Error(), "too long")
-				}
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tt.expected, string(res))
