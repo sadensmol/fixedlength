@@ -6,7 +6,6 @@ import (
 
 type Config struct {
 	AlignmentType            AlignmentType
-	NumbersDecimalPlaces     int
 	NumbersWithLeadingZeroes bool
 }
 
@@ -17,7 +16,6 @@ func GetConfig() *Config {
 	once.Do(func() {
 		instance = Config{
 			AlignmentType:            AlignmentTypeLeft,
-			NumbersDecimalPlaces:     2,
 			NumbersWithLeadingZeroes: true,
 		}
 	})

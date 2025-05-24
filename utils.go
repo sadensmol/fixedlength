@@ -18,13 +18,12 @@ func FormatStringWithAlignment(str string, length int, alignmentType AlignmentTy
 }
 
 func FormatStrNumberWithAlignment(strNum string, length int, leadingZeroes bool, alignmentType AlignmentType) (string, error) {
-	str := fmt.Sprintf("%s", strNum)
 	filler := byte(' ')
 	if leadingZeroes {
 		filler = '0'
 		alignmentType = AlignmentTypeRight // we always add zeroes in the beginning
 	}
-	return formatWithFiller(str, length, alignmentType, filler)
+	return formatWithFiller(strNum, length, alignmentType, filler)
 }
 
 // formatWithFiller handles string formatting with specified filler character
