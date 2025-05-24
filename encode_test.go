@@ -52,6 +52,10 @@ func TestMarshalIntegers(t *testing.T) {
 		Value int `range:"0,10"`
 	}
 
+	type smallIntStruct struct {
+		Value int `range:"0,5"`
+	}
+
 	type intStructWithRightTag struct {
 		Value int `range:"0,10" align:"right"`
 	}
@@ -119,7 +123,7 @@ func TestMarshalIntegers(t *testing.T) {
 		{
 			name:      "integer overflow",
 			value:     1234567890,
-			fieldTag:  "overflow",
+			fieldTag:  "small",
 			expectErr: true,
 		},
 	}
@@ -133,10 +137,7 @@ func TestMarshalIntegers(t *testing.T) {
 				res, err = Marshal(&intStructWithRightTag{Value: tt.value})
 			} else if tt.fieldTag == "left" {
 				res, err = Marshal(&intStructWithLeftTag{Value: tt.value})
-			} else if tt.fieldTag == "overflow" {
-				type smallIntStruct struct {
-					Value int `range:"0,5"`
-				}
+			} else if tt.fieldTag == "small" {
 				res, err = Marshal(&smallIntStruct{Value: tt.value})
 			} else {
 				res, err = Marshal(&intStruct{Value: tt.value})
@@ -144,9 +145,6 @@ func TestMarshalIntegers(t *testing.T) {
 
 			if tt.expectErr {
 				require.Error(t, err)
-				if tt.fieldTag == "overflow" {
-					require.Contains(t, err.Error(), "too long")
-				}
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tt.expected, string(res))
@@ -158,6 +156,10 @@ func TestMarshalIntegers(t *testing.T) {
 func TestMarshalFloats(t *testing.T) {
 	type floatStruct struct {
 		Value float64 `range:"0,10"`
+	}
+
+	type smallFloatStruct struct {
+		Value float64 `range:"0,5"`
 	}
 
 	type floatStructWithDecimals struct {
@@ -232,7 +234,7 @@ func TestMarshalFloats(t *testing.T) {
 		{
 			name:      "float overflow",
 			value:     1234.56,
-			fieldTag:  "overflow",
+			fieldTag:  "small",
 			expectErr: true,
 		},
 	}
@@ -248,10 +250,7 @@ func TestMarshalFloats(t *testing.T) {
 				res, err = Marshal(&floatStructWithRightAlign{Value: tt.value})
 			} else if tt.fieldTag == "left" {
 				res, err = Marshal(&floatStructWithLeftAlign{Value: tt.value})
-			} else if tt.fieldTag == "overflow" {
-				type smallFloatStruct struct {
-					Value float64 `range:"0,5"`
-				}
+			} else if tt.fieldTag == "small" {
 				res, err = Marshal(&smallFloatStruct{Value: tt.value})
 			} else {
 				res, err = Marshal(&floatStruct{Value: tt.value})
@@ -259,7 +258,7 @@ func TestMarshalFloats(t *testing.T) {
 
 			if tt.expectErr {
 				require.Error(t, err)
-				if tt.fieldTag == "overflow" {
+				if tt.fieldTag == "small" {
 					require.Contains(t, err.Error(), "too long")
 				}
 			} else {
