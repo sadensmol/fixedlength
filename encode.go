@@ -133,7 +133,7 @@ func MarshalField(field reflect.Value, t tag) ([]byte, error) {
 			return nil, err
 		}
 
-	case reflect.Int:
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
 		val := field.Int()
 
 		cVal, err := ConvertAsciiToEBCDICNumber(fmt.Sprintf("%d", val), t.decimals)
@@ -146,7 +146,7 @@ func MarshalField(field reflect.Value, t tag) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-	case reflect.Float64:
+	case reflect.Float64, reflect.Float32:
 		val := field.Float()
 		cVal, err := ConvertAsciiToEBCDICNumber(fmt.Sprintf("%f", val), t.decimals)
 		if err != nil {
